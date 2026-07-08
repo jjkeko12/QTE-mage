@@ -1,7 +1,9 @@
 // MenuScene.js
 // Menú principal con título y botón de inicio.
 
-class MenuScene extends Phaser.Scene {
+import Phaser from 'phaser';
+
+export default class MenuScene extends Phaser.Scene {
   constructor() {
     super('MenuScene');
   }

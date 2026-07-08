@@ -1,7 +1,9 @@
 // GameOverScene.js
 // Pantalla final con puntaje y botón de reinicio.
 
-class GameOverScene extends Phaser.Scene {
+import Phaser from 'phaser';
+
+export default class GameOverScene extends Phaser.Scene {
   constructor() {
     super('GameOverScene');
   }

@@ -10,6 +10,8 @@
 // WizardAnimations.createAll(scene)  -> registra todas las animaciones (llamar 1 vez)
 // WizardFactory.create(scene, x, y)  -> crea el sprite físico con anim idle por defecto
 
+import Phaser from 'phaser';
+
 const WIZARD_FRAMES = {
   idle:    { key: 'wiz-idle',    end: 7  },   // 8 frames: 0..7
   walk:    { key: 'wiz-walk',    end: 6  },   // 7 frames: 0..6
@@ -25,13 +27,13 @@ const WIZARD_FRAMES = {
   sphere:  { key: 'wiz-sphere',  end: 15 },   // 16 frames: 0..15
 };
 
-class WizardAnimations {
+export class WizardAnimations {
   static createAll(scene) {
     Object.entries(WIZARD_FRAMES).forEach(([name, cfg]) => {
       const animKey = 'wiz_' + name;
       if (scene.anims.exists(animKey)) return;
 
-      const isLoop = !['attack1', 'attack2', 'charge1', 'charge2', 'dead', 'hurt'].includes(name);
+      const isLoop = !['attack1', 'attack2', 'charge1', 'charge2', 'dead', 'hurt', 'jump', 'sphere', 'arrow'].includes(name);
       const frameRate = name === 'run' || name === 'attack1' || name === 'attack2' || name === 'sphere'
         ? 16
         : 10;
@@ -46,7 +48,7 @@ class WizardAnimations {
   }
 }
 
-class WizardFactory {
+export class WizardFactory {
   static create(scene, x, y) {
     const w = scene.physics.add.sprite(x, y, 'wiz-idle');
     w.setCollideWorldBounds(true);

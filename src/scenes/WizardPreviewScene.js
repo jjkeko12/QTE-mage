@@ -2,7 +2,9 @@
 // Escena auxiliar: muestra el mago y permite alternar entre sus
 // animaciones con teclas 1..9, 0, -, =. Útil para QA visual.
 
-class WizardPreviewScene extends Phaser.Scene {
+import Phaser from 'phaser';
+
+export default class WizardPreviewScene extends Phaser.Scene {
   constructor() {
     super('WizardPreviewScene');
   }

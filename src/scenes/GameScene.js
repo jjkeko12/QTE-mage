@@ -2,7 +2,10 @@
 // Escena principal: el mago se mueve, junta tesoros y enfrenta QTEs
 // de forma aleatoria.
 
-class GameScene extends Phaser.Scene {
+import Phaser from 'phaser';
+import { WizardFactory } from '../Wizard.js';
+
+export default class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
   }
@@ -12,15 +15,50 @@ class GameScene extends Phaser.Scene {
     this.lives = 3;
     this.gameOver = false;
     this.qteActive = false;
+    this.qteCount = 0;
 
-    this.cameras.main.setBackgroundColor('#1a1a2e');
+    // Dimensiones del mapa: 4 backgrounds consecutivos escalados al alto del canvas.
+    // Cada background mide 576x324; escalado a 600 de alto → tileW = 576 * (600/324) ≈ 1066.67.
+    // 4 tiles → ~4267px de ancho total.
+    const bgScale = this.scale.height / 324;
+    const tileW = 576 * bgScale;
+    this.MAP_WIDTH = Math.round(tileW * 4);
+    this.MAP_HEIGHT = 600;
 
-    // Suelo
-    this.ground = this.physics.add.staticImage(400, 568, 'ground').setOrigin(0.5);
+    // Mundo físico y cámara con scroll horizontal.
+    this.physics.world.setBounds(0, 0, this.MAP_WIDTH, this.MAP_HEIGHT);
+    this.cameras.main.setBounds(0, 0, this.MAP_WIDTH, this.MAP_HEIGHT);
+
+    // Fondos consecutivos en el orden 4,1,3,2 (scroll normal con la cámara).
+    const order = ['bg-4', 'bg-1', 'bg-3', 'bg-2'];
+    order.forEach((key, i) => {
+      this.add.image(i * tileW, 0, key)
+        .setOrigin(0, 0)
+        .setScale(bgScale)
+        .setDepth(-1);
+    });
+
+    // Suelo físico invisible alineado con la línea de suelo del fondo arenoso
+    // (el background ya incluye el suelo visual). Top del suelo ≈ y 572 escalado.
+    const groundTop = Math.round(309 * bgScale); // ~572
+    const groundH = this.MAP_HEIGHT - groundTop;  // rellena hasta el fondo del canvas
+    const groundGfx = this.make.graphics({ x: 0, y: 0, add: false });
+    groundGfx.fillStyle(0x3b3b5b, 1);
+    groundGfx.fillRect(0, 0, this.MAP_WIDTH, groundH);
+    groundGfx.generateTexture('ground-wide', this.MAP_WIDTH, groundH);
+    this.ground = this.physics.add.staticImage(this.MAP_WIDTH / 2, groundTop + groundH / 2, 'ground-wide')
+      .setOrigin(0.5)
+      .setDepth(0)
+      .setVisible(false)
+      .refreshBody();
 
     // Mago
     this.player = WizardFactory.create(this, 100, 400);
+    this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.ground);
+
+    // La cámara sigue al mago horizontalmente.
+    this.cameras.main.startFollow(this.player, true, 0.08, 0);
 
     // Grupo de tesoros
     this.treasures = this.physics.add.group();
@@ -38,9 +76,9 @@ class GameScene extends Phaser.Scene {
     this.keyAttack = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 
     // HUD
-    this.scoreText = this.add.text(16, 16, 'Tesoro: 0', { fontSize: '20px', color: '#fbbf24' });
-    this.livesText = this.add.text(16, 44, 'Vidas: ❤❤❤', { fontSize: '18px', color: '#ef4444' });
-    this.helpText = this.add.text(16, 72, '← → moverse, ↑ saltar, Z atacar', { fontSize: '14px', color: '#9ca3af' });
+    this.scoreText = this.add.text(16, 16, 'Tesoro: 0', { fontSize: '20px', color: '#fbbf24' }).setScrollFactor(0);
+    this.livesText = this.add.text(16, 44, 'Vidas: ❤❤❤', { fontSize: '18px', color: '#ef4444' }).setScrollFactor(0);
+    this.helpText = this.add.text(16, 72, '← → moverse, ↑ saltar, Z atacar', { fontSize: '14px', color: '#9ca3af' }).setScrollFactor(0);
 
     this.scheduleQTE();
   }
@@ -94,7 +132,7 @@ class GameScene extends Phaser.Scene {
   }
 
   spawnTreasure() {
-    const x = Phaser.Math.Between(40, 760);
+    const x = Phaser.Math.Between(40, this.MAP_WIDTH - 40);
     const t = this.treasures.create(x, 0, 'treasure');
     t.setBounce(0.4);
     t.setCollideWorldBounds(true);
@@ -114,16 +152,16 @@ class GameScene extends Phaser.Scene {
 
   triggerQTE() {
     this.qteActive = true;
+    this.qteCount += 1;
+    const special = this.qteCount % 4 === 0;
     // Animación de "alerta" mientras está pausado
     this.player.play('wiz_hurt', true);
     this.scene.pause();
-    this.scene.launch('QTEScene', { lives: this.lives });
+    this.scene.launch('QTEScene', { lives: this.lives, special });
     this.scene.get('QTEScene').events.once('qte-finished', (data) => {
       this.qteActive = false;
       this.scene.resume();
       if (data.success) {
-        this.score += 25;
-        this.scoreText.setText('Tesoro: ' + this.score);
         this.player.play('wiz_sphere', true);
         this.player.once('animationcomplete', () => {
           if (this.player.active) this.player.play('wiz_idle', true);

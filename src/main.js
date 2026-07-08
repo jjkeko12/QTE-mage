@@ -1,6 +1,14 @@
 // main.js
 // Punto de entrada: configura Phaser y registra las escenas.
 
+import Phaser from 'phaser';
+import BootScene from './scenes/BootScene.js';
+import MenuScene from './scenes/MenuScene.js';
+import GameScene from './scenes/GameScene.js';
+import QTEScene from './scenes/QTEScene.js';
+import GameOverScene from './scenes/GameOverScene.js';
+import WizardPreviewScene from './scenes/WizardPreviewScene.js';
+
 const config = {
   type: Phaser.AUTO,
   parent: 'game',

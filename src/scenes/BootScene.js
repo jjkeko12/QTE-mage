@@ -1,7 +1,10 @@
 // BootScene.js
 // Carga assets y pasa al menú.
 
-class BootScene extends Phaser.Scene {
+import Phaser from 'phaser';
+import { WizardAnimations } from '../Wizard.js';
+
+export default class BootScene extends Phaser.Scene {
   constructor() {
     super('BootScene');
   }
@@ -23,6 +26,13 @@ class BootScene extends Phaser.Scene {
     this.load.spritesheet('wiz-arrow',  'assets/wizard/Magic_arrow.png',  { frameWidth: 128, frameHeight: 128 });
     this.load.spritesheet('wiz-sphere', 'assets/wizard/Magic_sphere.png', { frameWidth: 128, frameHeight: 128 });
 
+    // Fondos del mapa: los 4 backgrounds individuales (576x324 cada uno).
+    // Se colocan consecutivamente en GameScene en el orden 4,1,3,2.
+    this.load.image('bg-1', 'assets/images/fondo ;(/PNG/background 1/background 1.png');
+    this.load.image('bg-2', 'assets/images/fondo ;(/PNG/background 2/background 2.png');
+    this.load.image('bg-3', 'assets/images/fondo ;(/PNG/background 3/background 3.png');
+    this.load.image('bg-4', 'assets/images/fondo ;(/PNG/background 4/background 4.png');
+
     // Generamos un placeholder simple para el tesoro (mientras no lo reemplaces).
     const treasureGfx = this.make.graphics({ x: 0, y: 0, add: false });
     treasureGfx.fillStyle(0xfbbf24, 1);
@@ -35,6 +45,15 @@ class BootScene extends Phaser.Scene {
     groundGfx.fillStyle(0x3b3b5b, 1);
     groundGfx.fillRect(0, 0, 800, 64);
     groundGfx.generateTexture('ground', 800, 64);
+
+    // Placeholder para el ícono de alerta del QTE.
+    const alertGfx = this.make.graphics({ x: 0, y: 0, add: false });
+    alertGfx.fillStyle(0xef4444, 1);
+    alertGfx.fillTriangle(16, 0, 0, 28, 32, 28);
+    alertGfx.fillStyle(0xffffff, 1);
+    alertGfx.fillRect(15, 8, 2, 12);
+    alertGfx.fillRect(15, 22, 2, 3);
+    alertGfx.generateTexture('alert', 32, 32);
   }
 
   create() {
