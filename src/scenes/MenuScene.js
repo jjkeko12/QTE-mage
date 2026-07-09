@@ -12,59 +12,86 @@ export default class MenuScene extends Phaser.Scene {
     const cx = this.scale.width / 2;
     const cy = this.scale.height / 2;
 
-    // Fondo del menú con blur
-    let bgKey = 'menu-back-blur';
-    let usePostFX = false;
-    if (!this.textures.exists('menu-back-blur')) {
-      // Fallback Option B: usar la textura original con postFX
-      bgKey = 'menu-back';
-      usePostFX = true;
-    }
-    const bg = this.add.image(cx, cy, bgKey).setOrigin(0.5).setDepth(-1);
-    const w = bg.width || 1;
-    const h = bg.height || 1;
-    bg.setScale(Math.max(this.scale.width / w, this.scale.height / h));
-    if (usePostFX && bg.postFX) {
-      try {
-        bg.postFX.blur(8);
-      } catch (e) {
-        console.error('postFX no disponible, fondo sin blur:', e);
-      }
-    }
+    // Capa 1: imagen nítida cubriendo toda la pantalla (depth -2)
+    const sharp = this.add.image(cx, cy, 'menu-back').setOrigin(0.5).setDepth(-2);
+    const w = sharp.width || 1;
+    const h = sharp.height || 1;
+    sharp.setScale(Math.max(this.scale.width / w, this.scale.height / h));
 
-    this.add.text(cx, cy - 120, 'QTEs & Treasure', {
+    // Capa 2: imagen blureada cubriendo toda la pantalla (depth -1)
+    // Enmascarada con gradiente diagonal: blur a la izquierda, nítido a la derecha
+    const blurred = this.add.image(cx, cy, 'menu-back-blur').setOrigin(0.5).setDepth(-1);
+    blurred.setScale(Math.max(this.scale.width / w, this.scale.height / h));
+
+    // BitmapMask con gradiente diagonal (vertical con inclinación media-baja)
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = 800;
+    maskCanvas.height = 600;
+    const mctx = maskCanvas.getContext('2d');
+    const grad = mctx.createLinearGradient(0, 0, 300, 600);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.35, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.65, 'rgba(255,255,255,0)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    mctx.fillStyle = grad;
+    mctx.fillRect(0, 0, 800, 600);
+
+    const maskKey = 'menu-blur-mask';
+    this.textures.addCanvas(maskKey, maskCanvas);
+    const maskImage = this.add.image(0, 0, maskKey).setOrigin(0).setVisible(false).setDepth(-100);
+    blurred.setMask(maskImage.createBitmapMask());
+
+    // Título
+    const title = this.add.text(0, 200, 'QTEs & Treasure', {
       fontFamily: 'Arial',
       fontSize: '40px',
       color: '#fbbf24',
       fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(10);
+    }).setOrigin(0, 0.5).setDepth(10);
+    this.makeCutPanel(200, title.width, title.height);
 
-    this.add.text(cx, cy - 60, 'Sobrevive a los QTE y junta el tesoro', {
+    // Descripción
+    const desc = this.add.text(0, 250, 'Sobrevive a los QTE y junta el tesoro', {
       fontFamily: 'Arial',
       fontSize: '16px',
       color: '#ffffff',
-    }).setOrigin(0.5).setDepth(10);
+    }).setOrigin(0, 0.5).setDepth(10);
+    this.makeCutPanel(250, desc.width, desc.height);
 
-    const startBtn = this.add.text(cx, cy + 30, '[ JUGAR ]', {
+    // Botón JUGAR
+    const startBtn = this.add.text(0, 330, '[ JUGAR ]', {
       fontFamily: 'Arial',
       fontSize: '28px',
       color: '#4ade80',
-      backgroundColor: '#1f2937',
       padding: { x: 24, y: 12 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(10);
+    }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true }).setDepth(10);
+    this.makeCutPanel(330, startBtn.width, startBtn.height);
 
     startBtn.on('pointerover', () => startBtn.setStyle({ color: '#ffffff' }));
     startBtn.on('pointerout', () => startBtn.setStyle({ color: '#4ade80' }));
     startBtn.on('pointerdown', () => this.scene.start('GameScene'));
+  }
 
-    const previewBtn = this.add.text(cx, cy + 100, '[ PREVIEW MAGO ]', {
-      fontFamily: 'Arial',
-      fontSize: '18px',
-      color: '#9ca3af',
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(10);
-
-    previewBtn.on('pointerover', () => previewBtn.setStyle({ color: '#fbbf24' }));
-    previewBtn.on('pointerout', () => previewBtn.setStyle({ color: '#9ca3af' }));
-    previewBtn.on('pointerdown', () => this.scene.start('WizardPreviewScene'));
+  makeCutPanel(y, textWidth, textHeight) {
+    const padX = 10;
+    const padY = 12;
+    const pw = textWidth + padX;
+    const ph = textHeight + padY;
+    const cut = Math.min(15, ph * 0.4);
+    const topExtra = ph - cut;  // extensión de la diagonal hacia la derecha arriba
+    const g = this.add.graphics();
+    g.fillStyle(0x1e3a5f, 1);
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.lineTo(pw + topExtra, 0);   // borde superior extendido
+    g.lineTo(pw, ph - cut);        // diagonal extendida (punto original sin mover)
+    g.lineTo(pw - cut, ph);       // corte original (sin mover)
+    g.lineTo(0, ph);
+    g.closePath();
+    g.fillPath();
+    g.x = 0;
+    g.y = y - ph / 2;
+    g.setDepth(5);
+    return g;
   }
 }
