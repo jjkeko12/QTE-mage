@@ -41,6 +41,7 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('failure-meme', 'assets/images/quien-es-este-fracasado.png');
     this.load.image('sonda-civic', 'assets/images/sonda-civic.png');
     this.load.image('aint-peak', 'assets/images/ts_aint_peak_gng.png');
+    this.load.image('menu-back', 'assets/images/menu_back.png');
 
     // Generamos un placeholder simple para el tesoro (mientras no lo reemplaces).
     const treasureGfx = this.make.graphics({ x: 0, y: 0, add: false });
@@ -67,6 +68,24 @@ export default class BootScene extends Phaser.Scene {
 
   create() {
     WizardAnimations.createAll(this);
+
+    // Option A: pre-renderizar menu-back con blur en un canvas offline.
+    // ctx.filter = 'blur(8px)' es compatible con Canvas2D y no depende de WebGL.
+    if (this.textures.exists('menu-back')) {
+      try {
+        const source = this.textures.get('menu-back').getSourceImage();
+        const canvas = document.createElement('canvas');
+        canvas.width = source.width;
+        canvas.height = source.height;
+        const ctx = canvas.getContext('2d');
+        ctx.filter = 'blur(8px)';
+        ctx.drawImage(source, 0, 0);
+        this.textures.addCanvas('menu-back-blur', canvas);
+      } catch (e) {
+        console.error('No se pudo pre-renderizar el blur del menú:', e);
+      }
+    }
+
     this.scene.start('MenuScene');
   }
 }
