@@ -76,9 +76,9 @@ export default class GameScene extends Phaser.Scene {
     this.keyAttack = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 
     // HUD
-    this.scoreText = this.add.text(16, 16, 'Tesoro: 0', { fontSize: '20px', color: '#fbbf24' }).setScrollFactor(0);
-    this.livesText = this.add.text(16, 44, 'Vidas: ❤❤❤', { fontSize: '18px', color: '#ef4444' }).setScrollFactor(0);
-    this.helpText = this.add.text(16, 72, '← → moverse, ↑ saltar, Z atacar', { fontSize: '14px', color: '#9ca3af' }).setScrollFactor(0);
+    this.scoreText = this.add.text(16, 16, 'Tesoro: 0', { fontFamily: 'rogenz', fontSize: '20px', color: '#fbbf24' }).setScrollFactor(0);
+    this.livesText = this.add.text(16, 44, 'Vidas: ❤❤❤', { fontFamily: 'rogenz', fontSize: '18px', color: '#ef4444' }).setScrollFactor(0);
+    this.helpText = this.add.text(16, 72, '← → moverse, ↑ saltar, Z atacar', { fontFamily: 'rogenz', fontSize: '14px', color: '#9ca3af' }).setScrollFactor(0);
 
     this.scheduleQTE();
   }

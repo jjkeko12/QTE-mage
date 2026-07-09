@@ -11,8 +11,8 @@ export default class WizardPreviewScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#1a1a2e');
-    this.add.text(16, 16, 'Preview de animaciones del mago', { fontSize: '20px', color: '#fbbf24' });
-    this.add.text(16, 46, '1 idle · 2 walk · 3 run · 4 jump · 5 hurt · 6 dead · 7 attack1 · 8 attack2 · 9 charge1 · 0 charge2 · - arrow · = sphere · ESPACIO volver', { fontSize: '12px', color: '#9ca3af' });
+    this.add.text(16, 16, 'Preview de animaciones del mago', { fontFamily: 'rogenz', fontSize: '20px', color: '#fbbf24' });
+    this.add.text(16, 46, '1 idle · 2 walk · 3 run · 4 jump · 5 hurt · 6 dead · 7 attack1 · 8 attack2 · 9 charge1 · 0 charge2 · - arrow · = sphere · ESPACIO volver', { fontFamily: 'rogenz', fontSize: '12px', color: '#9ca3af' });
 
     // Suelo de referencia
     this.add.rectangle(400, 540, 800, 4, 0x4b5563).setOrigin(0.5);

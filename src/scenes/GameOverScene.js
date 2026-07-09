@@ -20,17 +20,20 @@ export default class GameOverScene extends Phaser.Scene {
     this.add.rectangle(0, 0, 800, 600, 0x0f0f1a).setOrigin(0);
 
     this.add.text(cx, cy - 120, this.victory ? '¡VICTORIA!' : 'GAME OVER', {
+      fontFamily: 'rogenz',
       fontSize: '48px',
       color: this.victory ? '#4ade80' : '#ef4444',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
     this.add.text(cx, cy - 30, 'Tesoro acumulado: ' + this.finalScore, {
+      fontFamily: 'rogenz',
       fontSize: '24px',
       color: '#fbbf24',
     }).setOrigin(0.5);
 
     const retry = this.add.text(cx, cy + 50, '[ REINTENTAR ]', {
+      fontFamily: 'rogenz',
       fontSize: '24px',
       color: '#ffffff',
       backgroundColor: '#1f2937',
@@ -42,6 +45,7 @@ export default class GameOverScene extends Phaser.Scene {
     retry.on('pointerdown', () => this.scene.start('GameScene'));
 
     const menu = this.add.text(cx, cy + 110, '[ MENÚ ]', {
+      fontFamily: 'rogenz',
       fontSize: '20px',
       color: '#9ca3af',
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });

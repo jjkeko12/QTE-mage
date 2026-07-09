@@ -43,7 +43,7 @@ export default class MenuScene extends Phaser.Scene {
 
     // Título
     const title = this.add.text(0, 200, 'QTEs & Treasure', {
-      fontFamily: 'Arial',
+      fontFamily: 'rogenz',
       fontSize: '40px',
       color: '#fbbf24',
       fontStyle: 'bold',
@@ -52,7 +52,7 @@ export default class MenuScene extends Phaser.Scene {
 
     // Descripción
     const desc = this.add.text(0, 250, 'Sobrevive a los QTE y junta el tesoro', {
-      fontFamily: 'Arial',
+      fontFamily: 'rogenz',
       fontSize: '16px',
       color: '#ffffff',
     }).setOrigin(0, 0.5).setDepth(10);
@@ -60,7 +60,7 @@ export default class MenuScene extends Phaser.Scene {
 
     // Botón JUGAR
     const startBtn = this.add.text(0, 330, '[ JUGAR ]', {
-      fontFamily: 'Arial',
+      fontFamily: 'rogenz',
       fontSize: '28px',
       color: '#4ade80',
       padding: { x: 24, y: 12 },

@@ -60,8 +60,9 @@ export default class QTEScene extends Phaser.Scene {
   createNormal(cx, cy) {
     // Tecla objetivo
     this.targetKey = Phaser.Utils.Array.GetRandom(QTE_KEYS);
-    this.add.text(cx, cy - 40, '¡PULSA RÁPIDO!', { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
+    this.add.text(cx, cy - 40, '¡PULSA RÁPIDO!', { fontFamily: 'rogenz', fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
     this.keyText = this.add.text(cx, cy + 20, this.targetKey, {
+      fontFamily: 'rogenz',
       fontSize: '64px',
       color: '#fbbf24',
       fontStyle: 'bold',
@@ -98,14 +99,15 @@ export default class QTEScene extends Phaser.Scene {
     this.failIndex = -1;
     this.timedOut = false;
 
-    this.add.text(cx, cy - 80, '¡SECUENCIA ESPECIAL!', { fontSize: '26px', color: '#f472b6', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(cx, cy - 40, 'Pulsa las 4 teclas en orden', { fontSize: '18px', color: '#ffffff' }).setOrigin(0.5);
+    this.add.text(cx, cy - 80, '¡SECUENCIA ESPECIAL!', { fontFamily: 'rogenz', fontSize: '26px', color: '#f472b6', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(cx, cy - 40, 'Pulsa las 4 teclas en orden', { fontFamily: 'rogenz', fontSize: '18px', color: '#ffffff' }).setOrigin(0.5);
 
     // Render de cada tecla de la secuencia
     this.seqTexts = this.sequence.map((key, i) => {
       const spacing = 110;
       const startX = cx - (spacing * (SPECIAL_LENGTH - 1)) / 2;
       const txt = this.add.text(startX + i * spacing, cy + 30, key, {
+        fontFamily: 'rogenz',
         fontSize: '48px',
         color: '#fbbf24',
         fontStyle: 'bold',
@@ -251,6 +253,7 @@ export default class QTEScene extends Phaser.Scene {
     } else if (this.seqTexts) {
       // En modo especial mostramos el resultado sobre la secuencia
       this.resultText = this.add.text(cx, cy + 110, success ? '¡BIEN!' : '¡FALLASTE!', {
+        fontFamily: 'rogenz',
         fontSize: '40px',
         color: success ? '#4ade80' : '#ef4444',
         fontStyle: 'bold',
