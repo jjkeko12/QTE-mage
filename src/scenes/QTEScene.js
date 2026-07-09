@@ -9,7 +9,7 @@
 import Phaser from 'phaser';
 
 const QTE_KEYS = ['A', 'S', 'D', 'F', 'J', 'K', 'L'];
-const QTE_DURATION = 1500; // ms
+const QTE_DURATION = 800; // ms
 const SPECIAL_DURATION = 2500; // ms (global para toda la secuencia)
 const SPECIAL_LENGTH = 4;
 const MIN_KEY_DISTANCE = 4; // distancia mínima en home-row entre teclas consecutivas
@@ -27,6 +27,19 @@ export default class QTEScene extends Phaser.Scene {
     this.success = false;
     this.finished = false;
     this.special = !!(data && data.special);
+    // Reset de propiedades stale: la escena es un singleton y las
+    // referencias JS persisten aunque scene.stop() destruya los objetos.
+    this.keyText = null;
+    this.seqTexts = null;
+    this.targetKey = null;
+    this.resultText = null;
+    this.timerBarLeft = null;
+    this.timerBarRight = null;
+    this.normalKeyHandler = null;
+    this.specialKeyHandler = null;
+    this.failIndex = -1;
+    this.timedOut = false;
+
     const cx = this.scale.width / 2;
     const cy = this.scale.height / 2;
 
@@ -65,22 +78,25 @@ export default class QTEScene extends Phaser.Scene {
 
     this.input.keyboard.once('keydown-' + this.targetKey, () => this.finish(true));
 
-    // Cualquier otra tecla falla el QTE (excepto las flechas direccionales).
-    this.input.keyboard.on('keydown', (event) => {
+    this.normalKeyHandler = (event) => {
       if (this.finished) return;
       if (event.code === 'ArrowLeft' || event.code === 'ArrowRight'
           || event.code === 'ArrowUp' || event.code === 'ArrowDown') return;
       if (event.key.toUpperCase() !== this.targetKey) {
-        this.input.keyboard.removeAllListeners('keydown');
+        this.input.keyboard.off('keydown', this.normalKeyHandler);
+        this.input.keyboard.off('keydown-' + this.targetKey);
         this.finish(false);
       }
-    });
+    };
+    this.input.keyboard.on('keydown', this.normalKeyHandler);
   }
 
   // ---------- Modo especial ----------
   createSpecial(cx, cy) {
     this.sequence = this.generateSequence();
     this.currentIndex = 0;
+    this.failIndex = -1;
+    this.timedOut = false;
 
     this.add.text(cx, cy - 80, '¡SECUENCIA ESPECIAL!', { fontSize: '26px', color: '#f472b6', fontStyle: 'bold' }).setOrigin(0.5);
     this.add.text(cx, cy - 40, 'Pulsa las 4 teclas en orden', { fontSize: '18px', color: '#ffffff' }).setOrigin(0.5);
@@ -106,10 +122,10 @@ export default class QTEScene extends Phaser.Scene {
 
     this.timedEvent = this.time.addEvent({
       delay: SPECIAL_DURATION,
-      callback: () => this.finish(false),
+      callback: () => { this.timedOut = true; this.finish(false); },
     });
 
-    this.input.keyboard.on('keydown', (event) => {
+    this.specialKeyHandler = (event) => {
       if (this.finished) return;
       if (event.code === 'ArrowLeft' || event.code === 'ArrowRight'
           || event.code === 'ArrowUp' || event.code === 'ArrowDown') return;
@@ -120,17 +136,19 @@ export default class QTEScene extends Phaser.Scene {
         this.seqTexts[this.currentIndex].setStyle({ color: '#4ade80' });
         this.currentIndex += 1;
         if (this.currentIndex >= this.sequence.length) {
-          this.input.keyboard.removeAllListeners('keydown');
+          this.input.keyboard.off('keydown', this.specialKeyHandler);
           this.finish(true);
         } else {
           this.highlightCurrent();
         }
       } else {
         // Cualquier tecla incorrecta falla todo el QTE
-        this.input.keyboard.removeAllListeners('keydown');
+        this.failIndex = this.currentIndex;
+        this.input.keyboard.off('keydown', this.specialKeyHandler);
         this.finish(false);
       }
-    });
+    };
+    this.input.keyboard.on('keydown', this.specialKeyHandler);
   }
 
   // Genera una secuencia de 4 teclas donde cada tecla está "lejos" de la anterior
@@ -195,8 +213,37 @@ export default class QTEScene extends Phaser.Scene {
     this.finished = true;
     this.success = success;
 
+    if (this.timedEvent) this.timedEvent.remove();
+    // Limpieza robusta de listeners de teclado para que no interfieran
+    // con el siguiente QTE (normal o especial).
+    if (this.normalKeyHandler) this.input.keyboard.off('keydown', this.normalKeyHandler);
+    if (this.specialKeyHandler) this.input.keyboard.off('keydown', this.specialKeyHandler);
+    if (this.targetKey) this.input.keyboard.off('keydown-' + this.targetKey);
+    this.input.keyboard.removeAllListeners('keydown');
+
     const cx = this.scale.width / 2;
     const cy = this.scale.height / 2;
+
+    // Determinar el delay según modo y resultado
+    let delay;
+    if (this.special) {
+      delay = 500;  // solo el texto de resultado, la imagen va en GameScene
+    } else {
+      delay = this.success ? 200 : 500;
+    }
+
+    // Programar el cierre de la escena ANTES de tocar la imagen: así,
+    // aunque la imagen falle, la escena siempre se cierra y el juego
+    // se reanuda (evita el congelamiento tras el QTE especial).
+    this.time.delayedCall(delay, () => {
+      this.events.emit('qte-finished', {
+        success: this.success,
+        special: this.special,
+        failIndex: this.failIndex,
+        timedOut: this.timedOut,
+      });
+      this.scene.stop();
+    });
 
     if (this.keyText) {
       this.keyText.setText(success ? '¡BIEN!' : '¡FALLASTE!');
@@ -212,20 +259,5 @@ export default class QTEScene extends Phaser.Scene {
     const color = success ? 0x4ade80 : 0xef4444;
     if (this.timerBarLeft) this.timerBarLeft.setFillStyle(color);
     if (this.timerBarRight) this.timerBarRight.setFillStyle(color);
-
-    // Determinar el delay según modo y resultado
-    let delay;
-    if (this.keyText) {
-      // QTE normal
-      delay = success ? 200 : 500;
-    } else {
-      // QTE especial: mantener 600 ms
-      delay = 600;
-    }
-
-    this.time.delayedCall(delay, () => {
-      this.events.emit('qte-finished', { success: this.success });
-      this.scene.stop();
-    });
   }
 }

@@ -161,6 +161,12 @@ export default class GameScene extends Phaser.Scene {
     this.scene.get('QTEScene').events.once('qte-finished', (data) => {
       this.qteActive = false;
       this.scene.resume();
+
+      // Mostrar imagen de resultado del QTE especial sobre el juego
+      if (data.special) {
+        this.showSpecialResultImage(data.success, data.failIndex, data.timedOut);
+      }
+
       if (data.success) {
         this.player.play('wiz_sphere', true);
         this.player.once('animationcomplete', () => {
@@ -177,6 +183,43 @@ export default class GameScene extends Phaser.Scene {
       }
       if (!this.gameOver) this.scheduleQTE();
     });
+  }
+
+  showSpecialResultImage(success, failIndex, timedOut) {
+    let imgKey;
+    if (success) {
+      imgKey = 'family-pride';        // completado
+    } else if (timedOut) {
+      imgKey = 'sonda-civic';         // no pulsó ninguna tecla
+    } else if (failIndex < 2) {
+      imgKey = 'failure-meme';        // falló 1ª o 2ª tecla
+    } else {
+      imgKey = 'aint-peak';           // falló 3ª o 4ª tecla
+    }
+    if (!this.textures.exists(imgKey)) {
+      console.error('Textura no encontrada:', imgKey);
+      return;
+    }
+    try {
+      const cam = this.cameras.main;
+      const img = this.add.image(cam.midPoint.x, cam.midPoint.y, imgKey)
+        .setOrigin(0.5)
+        .setScrollFactor(0)  // fija en pantalla (HUD)
+        .setDepth(1000);
+      const w = img.width || 1;
+      const h = img.height || 1;
+      img.setScale(Math.max(this.scale.width / w, this.scale.height / h));
+      img.setAlpha(1);
+      this.tweens.add({
+        targets: img,
+        alpha: { from: 1, to: 0 },
+        duration: 300,
+        delay: 500,   // visible 500 ms
+        onComplete: () => img.destroy(),
+      });
+    } catch (e) {
+      console.error('Error al mostrar imagen del QTE especial:', e);
+    }
   }
 
   updateLivesHUD() {

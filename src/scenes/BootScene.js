@@ -10,6 +10,9 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.on('loaderror', (file) => {
+      console.error('Error cargando asset:', file.key, file.url);
+    });
     // Sprite sheets del mago (cada frame es 128x128).
     // Cargamos cada sheet como una "textura multi-frame" usando frameWidth/frameHeight
     // para poder extraer los frames por índice en las animaciones.
@@ -32,6 +35,12 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('bg-2', 'assets/images/fondo ;(/PNG/background 2/background 2.png');
     this.load.image('bg-3', 'assets/images/fondo ;(/PNG/background 3/background 3.png');
     this.load.image('bg-4', 'assets/images/fondo ;(/PNG/background 4/background 4.png');
+
+    // Memes / recompensas del QTE especial.
+    this.load.image('family-pride', 'assets/images/es_el_orgullo_de_la_familia.png');
+    this.load.image('failure-meme', 'assets/images/quien-es-este-fracasado.png');
+    this.load.image('sonda-civic', 'assets/images/sonda-civic.png');
+    this.load.image('aint-peak', 'assets/images/ts_aint_peak_gng.png');
 
     // Generamos un placeholder simple para el tesoro (mientras no lo reemplaces).
     const treasureGfx = this.make.graphics({ x: 0, y: 0, add: false });
