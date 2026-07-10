@@ -1,4 +1,4 @@
-# QTEs & Treasure
+# The lost mage
 
 Prototipo de juego en **Phaser 3** (HTML/JS puro, sin build) donde el jugador recolecta tesoros y debe sobrevivir a **Quick Time Events** aleatorios.
 

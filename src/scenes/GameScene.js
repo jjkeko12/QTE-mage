@@ -18,6 +18,18 @@ export default class GameScene extends Phaser.Scene {
     this.qteActive = false;
     this.qteCount = 0;
 
+    // Fade-in al entrar al juego
+    const fadeOverlay = this.add.rectangle(0, 0, 800, 600, 0x000000)
+      .setOrigin(0)
+      .setAlpha(1)
+      .setDepth(1000);
+    this.tweens.add({
+      targets: fadeOverlay,
+      alpha: { from: 1, to: 0 },
+      duration: 500,
+      ease: 'Sine.inOut',
+    });
+
     // Dimensiones del mapa: 4 backgrounds consecutivos escalados al alto del canvas.
     // Cada background mide 576x324; escalado a 600 de alto → tileW = 576 * (600/324) ≈ 1066.67.
     // 4 tiles → ~4267px de ancho total.
@@ -164,7 +176,16 @@ export default class GameScene extends Phaser.Scene {
   }
 
   spawnChest() {
-    const x = Phaser.Math.Between(40, this.MAP_WIDTH - 40);
+    let x;
+    const playerX = this.player.x;
+    if (Math.random() < 0.5) {
+      x = playerX + Phaser.Math.Between(500, 1000);
+      if (x > this.MAP_WIDTH - 40) x = playerX - Phaser.Math.Between(500, 1000);
+    } else {
+      x = playerX - Phaser.Math.Between(500, 1000);
+      if (x < 40) x = playerX + Phaser.Math.Between(500, 1000);
+    }
+    x = Phaser.Math.Clamp(x, 40, this.MAP_WIDTH - 40);
     const chest = this.chests.create(x, this.groundTop - 24, 'gold-chest');
     const targetH = 48;
     const origH = chest.frame.height || 1;
@@ -295,13 +316,13 @@ export default class GameScene extends Phaser.Scene {
         .setDepth(1000);
       const w = img.width || 1;
       const h = img.height || 1;
-      img.setScale(Math.max(this.scale.width / w, this.scale.height / h));
+      img.setScale(Math.min(this.scale.width / w, this.scale.height / h));
       img.setAlpha(1);
       this.tweens.add({
         targets: img,
         alpha: { from: 1, to: 0 },
-        duration: 300,
-        delay: 500,   // visible 500 ms
+        duration: 500,
+        delay: 1000,   // visible 1000 ms
         onComplete: () => img.destroy(),
       });
     } catch (e) {
