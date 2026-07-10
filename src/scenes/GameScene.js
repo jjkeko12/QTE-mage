@@ -13,6 +13,7 @@ export default class GameScene extends Phaser.Scene {
   create() {
     this.score = 0;
     this.lives = 3;
+    this.maxLives = 4;
     this.gameOver = false;
     this.qteActive = false;
     this.qteCount = 0;
@@ -40,7 +41,8 @@ export default class GameScene extends Phaser.Scene {
 
     // Suelo físico invisible alineado con la línea de suelo del fondo arenoso
     // (el background ya incluye el suelo visual). Top del suelo ≈ y 572 escalado.
-    const groundTop = Math.round(309 * bgScale); // ~572
+    this.groundTop = Math.round(309 * bgScale); // ~572
+    const groundTop = this.groundTop;
     const groundH = this.MAP_HEIGHT - groundTop;  // rellena hasta el fondo del canvas
     const groundGfx = this.make.graphics({ x: 0, y: 0, add: false });
     groundGfx.fillStyle(0x3b3b5b, 1);
@@ -60,17 +62,6 @@ export default class GameScene extends Phaser.Scene {
     // La cámara sigue al mago horizontalmente.
     this.cameras.main.startFollow(this.player, true, 0.08, 0);
 
-    // Grupo de tesoros
-    this.treasures = this.physics.add.group();
-    this.spawnTreasure();
-
-    this.physics.add.overlap(this.player, this.treasures, (_p, t) => {
-      t.destroy();
-      this.score += 10;
-      this.scoreText.setText('Tesoro: ' + this.score);
-      this.spawnTreasure();
-    });
-
     // Controles
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keyAttack = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
@@ -80,13 +71,44 @@ export default class GameScene extends Phaser.Scene {
     this.livesText = this.add.text(16, 44, 'Vidas: ❤❤❤', { fontFamily: 'rogenz', fontSize: '18px', color: '#ef4444' }).setScrollFactor(0);
     this.helpText = this.add.text(16, 72, '← → moverse, ↑ saltar, Z atacar', { fontFamily: 'rogenz', fontSize: '14px', color: '#9ca3af' }).setScrollFactor(0);
 
+    this.chests = this.physics.add.group();
+    this.physics.add.overlap(this.player, this.chests, (_p, chest) => {
+      chest.destroy();
+      const roll = Math.random();
+      if (roll < 0.5) {
+        this.score += 10;
+      } else if (roll < 0.8) {
+        this.score += 20;
+      } else {
+        this.score += 25;
+        if (this.lives < this.maxLives) {
+          this.lives += 1;
+          this.updateLivesHUD();
+        }
+      }
+      this.scoreText.setText('Tesoro: ' + this.score);
+      this.activeChest = null;
+      this.chestArrow.setVisible(false);
+      this.scheduleChest();
+    });
+
+    this.chestArrow = this.add.image(400, 50, 'chest-arrow')
+      .setScrollFactor(0)
+      .setDepth(500)
+      .setVisible(false);
+    this.activeChest = null;
+    this.chestArrowBob = 0;
+
     this.scheduleQTE();
+    this.scheduleChest();
   }
 
   update() {
     if (this.gameOver || this.qteActive) return;
 
-    const speed = 200;
+    const speed = 300;
+
+    this.updateChestArrow();
     const onGround = this.player.body.blocked.down || this.player.body.touching.down;
     const moving = this.cursors.left.isDown || this.cursors.right.isDown;
     const velX = this.player.body.velocity.x;
@@ -131,13 +153,79 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  spawnTreasure() {
+  scheduleChest() {
+    const delay = Phaser.Math.Between(3000, 7000);
+    this.time.addEvent({
+      delay,
+      callback: () => {
+        if (!this.gameOver) this.spawnChest();
+      },
+    });
+  }
+
+  spawnChest() {
     const x = Phaser.Math.Between(40, this.MAP_WIDTH - 40);
-    const t = this.treasures.create(x, 0, 'treasure');
-    t.setBounce(0.4);
-    t.setCollideWorldBounds(true);
-    t.setVelocity(Phaser.Math.Between(-80, 80), 0);
-    this.physics.add.collider(t, this.ground);
+    const chest = this.chests.create(x, this.groundTop - 24, 'gold-chest');
+    const targetH = 48;
+    const origH = chest.frame.height || 1;
+    const scale = targetH / origH;
+    chest.setScale(scale);
+    chest.setOrigin(0.5, 1);
+    if (chest.body) {
+      chest.body.setSize(chest.frame.width * scale, chest.frame.height * scale);
+      chest.body.setOffset((chest.frame.width - chest.frame.width * scale) / 2, chest.frame.height - chest.frame.height * scale);
+    }
+    chest.setBounce(0);
+    chest.setGravityY(0);
+    chest.setCollideWorldBounds(true);
+    this.physics.add.collider(chest, this.ground);
+    this.activeChest = chest;
+  }
+
+  updateChestArrow() {
+    if (!this.activeChest || !this.activeChest.active) {
+      if (this.chestArrow) this.chestArrow.setVisible(false);
+      return;
+    }
+    const cam = this.cameras.main;
+    const screenChestX = this.activeChest.x - cam.scrollX;
+    const screenChestY = this.activeChest.y - cam.scrollY;
+
+    const margin = 30;
+    const inView = screenChestX > 0 && screenChestX < this.scale.width
+      && screenChestY > 0 && screenChestY < this.scale.height;
+
+    if (inView) {
+      this.chestArrow.setVisible(false);
+      return;
+    }
+
+    // Calcular la posición clamped en el borde de la pantalla hacia el cofre
+    const cx = this.scale.width / 2;
+    const cy = this.scale.height / 2;
+    let ax = cx;
+    let ay = cy;
+
+    const dx = screenChestX - cx;
+    const dy = screenChestY - cy;
+
+    // Determinar en qué borde cae la recta hacia el cofre
+    const halfW = this.scale.width / 2 - margin;
+    const halfH = this.scale.height / 2 - margin;
+    const scaleX = halfW / Math.abs(dx || 0.0001);
+    const scaleY = halfH / Math.abs(dy || 0.0001);
+    const scaleMin = Math.min(scaleX, scaleY);
+    ax = cx + dx * scaleMin;
+    ay = cy + dy * scaleMin;
+
+    this.chestArrow.x = ax;
+    this.chestArrow.y = ay;
+
+    // Rotar la flecha para apuntar al cofre
+    const angle = Math.atan2(dy, dx);
+    this.chestArrow.rotation = angle + Math.PI / 2;
+
+    this.chestArrow.setVisible(true);
   }
 
   scheduleQTE() {
@@ -201,8 +289,7 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     try {
-      const cam = this.cameras.main;
-      const img = this.add.image(cam.midPoint.x, cam.midPoint.y, imgKey)
+      const img = this.add.image(this.scale.width / 2, this.scale.height / 2, imgKey)
         .setOrigin(0.5)
         .setScrollFactor(0)  // fija en pantalla (HUD)
         .setDepth(1000);
@@ -223,8 +310,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   updateLivesHUD() {
-    const hearts = '❤'.repeat(this.lives) + '·'.repeat(3 - this.lives);
-    this.livesText.setText('Vidas: ' + hearts);
+    const hearts = '❤'.repeat(Math.min(this.lives, 3)) + '·'.repeat(Math.max(0, 3 - this.lives));
+    if (this.lives >= 4) {
+      this.livesText.setText('Vidas: ' + hearts + '💙');
+    } else {
+      this.livesText.setText('Vidas: ' + hearts);
+    }
   }
 
   endGame(victory) {

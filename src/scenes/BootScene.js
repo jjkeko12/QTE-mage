@@ -42,14 +42,7 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('sonda-civic', 'assets/images/sonda-civic.png');
     this.load.image('aint-peak', 'assets/images/ts_aint_peak_gng.png');
     this.load.image('menu-back', 'assets/images/menu_back.png');
-
-    // Generamos un placeholder simple para el tesoro (mientras no lo reemplaces).
-    const treasureGfx = this.make.graphics({ x: 0, y: 0, add: false });
-    treasureGfx.fillStyle(0xfbbf24, 1);
-    treasureGfx.fillCircle(12, 12, 12);
-    treasureGfx.fillStyle(0xf59e0b, 1);
-    treasureGfx.fillRect(8, 4, 8, 4);
-    treasureGfx.generateTexture('treasure', 24, 24);
+    this.load.image('gold-chest', 'assets/images/gold-removebg-preview.png');
 
     const groundGfx = this.make.graphics({ x: 0, y: 0, add: false });
     groundGfx.fillStyle(0x3b3b5b, 1);
@@ -64,6 +57,14 @@ export default class BootScene extends Phaser.Scene {
     alertGfx.fillRect(15, 8, 2, 12);
     alertGfx.fillRect(15, 22, 2, 3);
     alertGfx.generateTexture('alert', 32, 32);
+
+    // Placeholder para la flecha indicadora de cofre (triángulo apuntando hacia abajo).
+    const arrowGfx = this.make.graphics({ x: 0, y: 0, add: false });
+    arrowGfx.fillStyle(0xfbbf24, 1);
+    arrowGfx.fillTriangle(16, 0, 0, 20, 32, 20);
+    arrowGfx.fillStyle(0xf59e0b, 1);
+    arrowGfx.fillRect(14, 20, 4, 4);
+    arrowGfx.generateTexture('chest-arrow', 32, 24);
   }
 
   create() {

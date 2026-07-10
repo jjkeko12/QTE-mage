@@ -42,7 +42,7 @@ export default class MenuScene extends Phaser.Scene {
     blurred.setMask(maskImage.createBitmapMask());
 
     // Título
-    const title = this.add.text(0, 200, 'QTEs & Treasure', {
+    const title = this.add.text(20, 200, 'QTEs & Treasure', {
       fontFamily: 'rogenz',
       fontSize: '40px',
       color: '#fbbf24',
@@ -51,7 +51,7 @@ export default class MenuScene extends Phaser.Scene {
     this.makeCutPanel(200, title.width, title.height);
 
     // Descripción
-    const desc = this.add.text(0, 250, 'Sobrevive a los QTE y junta el tesoro', {
+    const desc = this.add.text(20, 250, 'Sobrevive a los QTE y junta el tesoro', {
       fontFamily: 'rogenz',
       fontSize: '16px',
       color: '#ffffff',
@@ -73,7 +73,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   makeCutPanel(y, textWidth, textHeight) {
-    const padX = 10;
+    const padX = 40;
     const padY = 12;
     const pw = textWidth + padX;
     const ph = textHeight + padY;
